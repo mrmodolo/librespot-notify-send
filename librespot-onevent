@@ -48,6 +48,7 @@ is_access_token_expired() {
   then
     echo "VALID"
   else
+    echo "$track_info" | systemd-cat -t librespot -p info
     echo "INVALID"
   fi
 }
@@ -102,14 +103,15 @@ notify_track() {
   local track_duration
   track_duration=$(format_time "${track[duration_ms]}")
 
-  echo "Album: ${album_name}"
-  echo "Image URL: ${album_image_url}"
-  echo "Track: ${track_name}"
-  echo "Duration: ${track_duration}"
+  echo "Album: ${album_name}" | systemd-cat -t librespot -p info
+  echo "Image URL: ${album_image_url}" | systemd-cat -t librespot -p info
+  echo "Track: ${track_name}" | systemd-cat -t librespot -p info
+  echo "Duration: ${track_duration}" | systemd-cat -t librespot -p info
   
   local temp_file_icon
   temp_file_icon=$(mktemp)
   wget -q "${album_image_url}" -O "${temp_file_icon}"
+  file -b "${temp_file_icon}" | systemd-cat -t librespot -p info
   notify-send --hint int:transient:1 -i "${temp_file_icon}" \
     --expire-time="${expire_time}" "${album_name}" "<b>${track_name}</b> ${track_duration}"
   rm -f "${temp_file_icon}"
@@ -131,10 +133,12 @@ playing_track() {
     expired=$(is_access_token_expired "$track_info")
     if [ "$expired" == "INVALID" ]
     then
+      echo "Renovando o token" | systemd-cat -t librespot -p info
       access_token=$(refresh_token)
       track_info=$(request_track_info "$access_token" "$track_id" "$market")
     fi
   else
+    echo "Criando o arquivo de token em $CACHE_PATH/$BEARER_TOKEN_FILE" | systemd-cat -t librespot -p info
     access_token=$(refresh_token)
     track_info=$(request_track_info "$access_token" "$track_id" "$market")
   fi
