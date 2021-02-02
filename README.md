@@ -1,0 +1,1 @@
+# Exibindo informações da trilha

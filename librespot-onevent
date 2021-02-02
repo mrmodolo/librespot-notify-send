@@ -1,0 +1,157 @@
+#!/bin/bash
+
+## Configurações 
+## CACHE_PATH
+## BEARER_TOKEN_FILE
+## CLIEND_ID
+## CLIENT_SECRET
+source '/home/modolo/.config/librespot/config.env'
+
+## Requisita um novo token
+request_access_token() {
+  local bearer
+  bearer="$(echo -n "$CLIEND_ID:$CLIENT_SECRET" | base64 -w0 )"
+  curl --silent -H "Authorization: Basic $bearer" \
+    -d "grant_type=client_credentials" \
+    -X "POST" 'https://accounts.spotify.com/api/token'
+}
+
+## Retorna as informações do track no formato json
+request_track_info() {
+  local access_token="$1"
+  local track_id="$2"
+  local market="$3"
+  curl --silent -X "GET" "https://api.spotify.com/v1/tracks/$track_id?market=$market" \
+         -H "Accept: application/json" \
+         -H "Content-Type: application/json" \
+         -H "Authorization: Bearer $access_token" 
+}
+
+## Persiste o token
+save_acess_token() {
+  local bearer="$1"
+  echo -n "$bearer" >"$CACHE_PATH/$BEARER_TOKEN_FILE"
+}
+
+## Recupera um token salvo
+retrieve_access_token() {
+  cat "$CACHE_PATH/$BEARER_TOKEN_FILE"
+}
+
+## Testa de é um track válido
+# TODO - Melhorar o teste de erros
+is_access_token_expired() {
+  local track_info="$1"
+  local expired
+  expired=$(echo "$track_info" | jq -r '.error')
+  if [ "$expired" == "null" ]
+  then
+    echo "VALID"
+  else
+    echo "INVALID"
+  fi
+}
+
+## Obtem um novo token
+refresh_token() {
+  local token_info
+  token_info=$(request_access_token)
+  local access_token
+  access_token=$(echo "$token_info" | jq -r '.access_token')
+  save_acess_token "$access_token"
+  echo "$access_token"
+}
+
+## Transforma mileseconds em horas, minutos e segundos
+format_time() {
+  local mileseconds=$1
+  local seconds
+  seconds=$(( "$mileseconds"/1000 ))
+  if [ "$seconds" -ge "3600" ]
+  then
+    date -d@${seconds} -u +%H:%M:%S
+  else
+    date -d@${seconds} -u +%M:%S
+  fi
+}
+
+## Notifica alterações de volume
+notify_volume()  {
+  local new_volume=$1
+  # Gnome e Ubuntu ignoram esse valor
+  local expire_time=${2:-1000}
+  local volume
+  volume=$(echo "scale=1;($new_volume/65535)*100" | bc)
+  notify-send --hint int:transient:1 \
+    --expire-time="$expire_time" \
+    --icon=audio-speakers-symbolic  "Spotify volume" "$volume%"
+}
+
+## Notifica as informações da trilha
+notify_track() {
+  local track_info="$1"
+  # Gnome e Ubuntu ignoram esse valor
+  local expire_time=${2:-2500}
+  # shellcheck disable=SC2155
+  declare -A track=$(echo "$track_info" | jq '.album.name,.album.images[2].url,.name,.duration_ms' \
+    | tr '\n' '\t' \
+    | awk -F'\t' '{printf "( [album_name]=%s [album_image_url]=%s [name]=%s [duration_ms]=%s )",$1,$2,$3,$4}')
+  local album_name=${track[album_name]}
+  local album_image_url=${track[album_image_url]}
+  local track_name=${track[name]}
+  local track_duration
+  track_duration=$(format_time "${track[duration_ms]}")
+
+  echo "Album: ${album_name}"
+  echo "Image URL: ${album_image_url}"
+  echo "Track: ${track_name}"
+  echo "Duration: ${track_duration}"
+  
+  local temp_file_icon
+  temp_file_icon=$(mktemp)
+  wget -q "${album_image_url}" -O "${temp_file_icon}"
+  notify-send --hint int:transient:1 -i "${temp_file_icon}" \
+    --expire-time="${expire_time}" "${album_name}" "<b>${track_name}</b> ${track_duration}"
+  rm -f "${temp_file_icon}"
+}
+
+## Trilha tocando
+playing_track() {
+  local track_id="$1"
+  local market="BR"
+  local track_info=""
+  if [ -f "$CACHE_PATH/$BEARER_TOKEN_FILE" ]
+  then
+    local access_token
+    local track_info
+    local expired
+    access_token=$(retrieve_access_token)
+    track_info=$(request_track_info "$access_token" "$track_id" "$market")
+    # TODO - Testar os possíveis erros retornados
+    expired=$(is_access_token_expired "$track_info")
+    if [ "$expired" == "INVALID" ]
+    then
+      access_token=$(refresh_token)
+      track_info=$(request_track_info "$access_token" "$track_id" "$market")
+    fi
+  else
+    access_token=$(refresh_token)
+    track_info=$(request_track_info "$access_token" "$track_id" "$market")
+  fi
+  echo "$track_info"
+}
+
+## Testa os vários eventos
+case "$PLAYER_EVENT" in
+  "playing")
+    # shellcheck disable=SC2153
+    track_info=$(playing_track "$TRACK_ID")
+    notify_track "$track_info" 3000
+    exit 0
+    ;;
+  "volume_set")
+    # shellcheck disable=SC2153
+    notify_volume "$VOLUME"
+    exit 0
+    ;;
+esac

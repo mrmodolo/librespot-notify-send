@@ -1,0 +1,22 @@
+[Unit]
+Description=Librespot
+Documentation=https://github.com/librespot-org/librespot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Restart=always
+RestartSec=10
+ExecStart=/home/modolo/bin/librespot --name "%p on %H" \
+          --bitrate 320 \
+          --cache '' \
+          --enable-volume-normalisation \
+          --autoplay \
+          --initial-volume 100 \
+          --device-type 'speaker' \
+          --username  ''  \
+          --password  ''  \
+          --onevent '' 
+
+[Install]
+WantedBy=multi-user.target
