@@ -102,16 +102,17 @@ notify_track() {
   local track_name=${track[name]}
   local track_duration
   track_duration=$(format_time "${track[duration_ms]}")
-
-  echo "Album: ${album_name}" | systemd-cat -t librespot -p info
-  echo "Image URL: ${album_image_url}" | systemd-cat -t librespot -p info
-  echo "Track: ${track_name}" | systemd-cat -t librespot -p info
-  echo "Duration: ${track_duration}" | systemd-cat -t librespot -p info
   
   local temp_file_icon
   temp_file_icon=$(mktemp)
   wget -q "${album_image_url}" -O "${temp_file_icon}"
-  file -b "${temp_file_icon}" | systemd-cat -t librespot -p info
+
+  echo "Album: ${album_name}" | systemd-cat -t librespot -p info
+  echo "Image URL: ${album_image_url}" | systemd-cat -t librespot -p info
+  echo "Image info: $(file -b "${temp_file_icon}")" | systemd-cat -t librespot -p info
+  echo "Track: ${track_name}" | systemd-cat -t librespot -p info
+  echo "Duration: ${track_duration}" | systemd-cat -t librespot -p info
+
   notify-send --hint int:transient:1 -i "${temp_file_icon}" \
     --expire-time="${expire_time}" "${album_name}" "<b>${track_name}</b> ${track_duration}"
   rm -f "${temp_file_icon}"
