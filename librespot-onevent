@@ -83,8 +83,9 @@ notify_volume()  {
   local expire_time=${2:-1000}
   local volume
   volume=$(echo "scale=1;($new_volume/65535)*100" | bc)
-  notify-send --hint int:transient:1 \
-    --expire-time="$expire_time" \
+  notify-send --hint=int:transient:1 \
+    --hint=string:x-canonical-private-synchronous:volume \
+    --expire-time="${expire_time}" \
     --icon=audio-speakers-symbolic  "Spotify volume" "$volume%"
 }
 
@@ -113,8 +114,12 @@ notify_track() {
   echo "Track: ${track_name}" | systemd-cat -t librespot -p info
   echo "Duration: ${track_duration}" | systemd-cat -t librespot -p info
 
-  notify-send --hint int:transient:1 -i "${temp_file_icon}" \
-    --expire-time="${expire_time}" "${album_name}" "<b>${track_name}</b> ${track_duration}"
+  notify-send --icon "${temp_file_icon}" \
+    --hint=int:transient:1 \
+    --hint=string:x-canonical-private-synchronous:track \
+    --expire-time="${expire_time}" \
+    "${album_name}" "<b>${track_name}</b> ${track_duration}"
+
   rm -f "${temp_file_icon}"
 }
 
