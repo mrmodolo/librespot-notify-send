@@ -85,8 +85,9 @@ notify_volume()  {
   volume=$(echo "scale=1;($new_volume/65535)*100" | bc)
   notify-send --hint=int:transient:1 \
     --hint=string:x-canonical-private-synchronous:volume \
+    --urgency=low \
     --expire-time="${expire_time}" \
-    --icon=audio-speakers-symbolic  "Spotify volume" "$volume%"
+    --icon=audio-speakers-symbolic  "Spotify" "Volume em ${volume}%"
 }
 
 ## Notifica as informações da trilha
