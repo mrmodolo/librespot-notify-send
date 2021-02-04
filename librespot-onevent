@@ -114,23 +114,27 @@ notify_track() {
   local track_duration
   track_duration=$(format_time "${track[duration_ms]}")
   
-  local temp_file_icon
-  temp_file_icon=$(mktemp)
-  wget -q "${album_image_url}" -O "${temp_file_icon}"
+  local album_image
+  album_image="$XDG_RUNTIME_DIR/librespot.album.image" 
+
+  # Remove a anterior caso exista
+  if [ -f "$album_image" ]
+  then
+    rm -f "$album_image" 2>/dev/null
+  fi
+  wget -q "${album_image_url}" -O "${album_image}"
 
   echo "Album: ${album_name}" | systemd-cat -t librespot -p info
   echo "Image URL: ${album_image_url}" | systemd-cat -t librespot -p info
-  echo "Image info: $(file -b "${temp_file_icon}")" | systemd-cat -t librespot -p info
+  echo "Image info: $(file -b "${album_image}")" | systemd-cat -t librespot -p info
   echo "Track: ${track_name}" | systemd-cat -t librespot -p info
   echo "Duration: ${track_duration}" | systemd-cat -t librespot -p info
 
-  notify-send --icon "${temp_file_icon}" \
+  notify-send --icon "${album_image}" \
     --hint=int:transient:1 \
     --hint=string:x-canonical-private-synchronous:track \
     --expire-time="${expire_time}" \
     "${album_name}" "<b>${track_name}</b> ${track_duration}"
-
-  rm -f "${temp_file_icon}"
 }
 
 ## Trilha tocando
