@@ -95,6 +95,7 @@ notify_volume()  {
 	  "LIBRESPOT_VOLUME" "$id" \
 	  audio-speakers-symbolic "Spotify" "Voume [ $volume% ]" [] "$hints" "$expire_time" \
     | sed -e 's/(uint32 //' -e 's/,)//')
+  echo "$id" >"$XDG_RUNTIME_DIR/librespot.volume.id"
 }
 
 ## Notifica as informações da trilha
