@@ -113,9 +113,12 @@ notify_track() {
   local track_name=${track[name]}
   local track_duration
   track_duration=$(format_time "${track[duration_ms]}")
-  
+
+  # Remove a anterior caso exista
+  rm -f "${XDG_RUNTIME_DIR/librespot.album_image.*}" 2>/dev/null
+
   local album_image
-  album_image="$XDG_RUNTIME_DIR/librespot.album_image" 
+  album_image=$(mktemp "$XDG_RUNTIME_DIR/librespot.album_image.XXXXXXXXXX")
 
   wget -q "${album_image_url}" -O "${album_image}"
 
@@ -129,9 +132,6 @@ notify_track() {
     --hint=int:transient:1 \
     --expire-time="${expire_time}" \
     "${album_name}" "<b>${track_name}</b> ${track_duration}"
-
-  # Remove a anterior caso exista
-  rm -f "${album_image}" 2>/dev/null
 }
 
 ## Trilha tocando
