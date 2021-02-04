@@ -171,6 +171,11 @@ case "$PLAYER_EVENT" in
     exit 0
     ;;
   "volume_set")
+    if [ -f "${CACHE_PATH}/started" ]
+    then
+      rm -f "${CACHE_PATH}/started" &>/dev/null
+      exit 0
+    fi
     # shellcheck disable=SC2153
     notify_volume "$VOLUME"
     exit 0
