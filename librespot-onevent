@@ -115,7 +115,7 @@ notify_track() {
   track_duration=$(format_time "${track[duration_ms]}")
   
   local album_image
-  album_image="$XDG_RUNTIME_DIR/librespot.album.image" 
+  album_image="$XDG_RUNTIME_DIR/librespot.album_image" 
 
   # Remove a anterior caso exista
   rm -f "${album_image}" 2>/dev/null
