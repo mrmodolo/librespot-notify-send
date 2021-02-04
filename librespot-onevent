@@ -127,7 +127,6 @@ notify_track() {
 
   notify-send --icon "${album_image}" \
     --hint=int:transient:1 \
-    --hint=string:x-canonical-private-synchronous:track \
     --expire-time="${expire_time}" \
     "${album_name}" "<b>${track_name}</b> ${track_duration}"
 
