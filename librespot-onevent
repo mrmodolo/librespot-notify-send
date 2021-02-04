@@ -117,8 +117,6 @@ notify_track() {
   local album_image
   album_image="$XDG_RUNTIME_DIR/librespot.album_image" 
 
-  # Remove a anterior caso exista
-  rm -f "${album_image}" 2>/dev/null
   wget -q "${album_image_url}" -O "${album_image}"
 
   echo "Album: ${album_name}" | systemd-cat -t librespot -p info
@@ -132,6 +130,9 @@ notify_track() {
     --hint=string:x-canonical-private-synchronous:track \
     --expire-time="${expire_time}" \
     "${album_name}" "<b>${track_name}</b> ${track_duration}"
+
+  # Remove a anterior caso exista
+  rm -f "${album_image}" 2>/dev/null
 }
 
 ## Trilha tocando
