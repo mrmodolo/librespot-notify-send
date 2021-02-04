@@ -118,10 +118,7 @@ notify_track() {
   album_image="$XDG_RUNTIME_DIR/librespot.album.image" 
 
   # Remove a anterior caso exista
-  if [ -f "$album_image" ]
-  then
-    rm -f "$album_image" 2>/dev/null
-  fi
+  rm -f "${album_image}" 2>/dev/null
   wget -q "${album_image_url}" -O "${album_image}"
 
   echo "Album: ${album_name}" | systemd-cat -t librespot -p info
