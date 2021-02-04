@@ -80,14 +80,21 @@ format_time() {
 notify_volume()  {
   local new_volume=$1
   # Gnome e Ubuntu ignoram esse valor
-  local expire_time=${2:-1000}
+  local expire_time=${2:-5000}
   local volume
   volume=$(echo "scale=1;($new_volume/65535)*100" | bc)
-  notify-send --hint=int:transient:1 \
-    --hint=string:x-canonical-private-synchronous:volume \
-    --urgency=low \
-    --expire-time="${expire_time}" \
-    --icon=audio-speakers-symbolic  "Spotify" "Volume em ${volume}%"
+  local hints
+  # urgency 'low' é 0
+  hints="{\"urgency\": <byte 0>, \"transient\": <int32 1>}"
+  local id
+  id=$(cat "$XDG_RUNTIME_DIR/librespot.volume.id" 2>/dev/null || echo 1)
+
+  id=$(gdbus call --session --dest org.freedesktop.Notifications \
+    --object-path /org/freedesktop/Notifications \
+	  --method org.freedesktop.Notifications.Notify \
+	  "LIBRESPOT_VOLUME" "$id" \
+	  audio-speakers-symbolic "Spotify" "Voume [ $volume% ]" [] "$hints" "$expire_time" \
+    | sed -e 's/(uint32 //' -e 's/,)//')
 }
 
 ## Notifica as informações da trilha
