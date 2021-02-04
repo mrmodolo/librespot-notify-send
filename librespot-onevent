@@ -82,7 +82,8 @@ notify_volume()  {
   # Gnome e Ubuntu ignoram esse valor
   local expire_time=${2:-5000}
   local volume
-  volume=$(echo "scale=1;($new_volume/65535)*100" | bc)
+  volume=$(echo "scale=4;($new_volume/65535)*100" | bc)
+  volume=$(printf "%02.2f" "$(echo "$volume" | tr '.' ',')")
   local hints
   # urgency 'low' é 0
   hints="{\"urgency\": <byte 0>, \"transient\": <int32 1>}"
