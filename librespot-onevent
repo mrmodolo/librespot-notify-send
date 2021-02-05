@@ -115,8 +115,7 @@ notify_track() {
   track_duration=$(format_time "${track[duration_ms]}")
 
   # Remove a anterior caso exista
-  rm -f "${XDG_RUNTIME_DIR/librespot.album_image.*}" 2>/dev/null
-
+  rm -f "${XDG_RUNTIME_DIR}/librespot.album_image.*" 2>/dev/null
   local album_image
   album_image=$(mktemp "$XDG_RUNTIME_DIR/librespot.album_image.XXXXXXXXXX")
 
