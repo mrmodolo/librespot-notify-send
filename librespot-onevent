@@ -128,10 +128,18 @@ notify_track() {
   echo "Track: ${track_name}" | systemd-cat -t librespot -p info
   echo "Duration: ${track_duration}" | systemd-cat -t librespot -p info
 
-  notify-send --icon "${album_image}" \
-    --hint=int:transient:1 \
-    --expire-time="${expire_time}" \
-    "${album_name}" "<b>${track_name}</b> ${track_duration}"
+  local hints
+  # urgency 'low' é 0
+  hints="{\"urgency\": <byte 0>, \"transient\": <int32 1>}"
+  local id
+  id=$(cat "$XDG_RUNTIME_DIR/librespot.track.id" 2>/dev/null || echo 1)
+  id=$(gdbus call --session --dest org.freedesktop.Notifications \
+    --object-path /org/freedesktop/Notifications \
+	  --method org.freedesktop.Notifications.Notify \
+	  "LIBRESPOT_TRACK" "$id" \
+	  "${album_image}" "${album_name}" "<b>${track_name}</b> ${track_duration}" [] "$hints" "$expire_time" \
+    | sed -e 's/(uint32 //' -e 's/,)//')
+  echo "$id" >"$XDG_RUNTIME_DIR/librespot.track.id"
 }
 
 ## Trilha tocando
@@ -167,7 +175,7 @@ case "$PLAYER_EVENT" in
   "playing")
     # shellcheck disable=SC2153
     track_info=$(playing_track "$TRACK_ID")
-    notify_track "$track_info" 3000
+    notify_track "$track_info" 5000
     exit 0
     ;;
   "volume_set")
@@ -177,7 +185,7 @@ case "$PLAYER_EVENT" in
       exit 0
     fi
     # shellcheck disable=SC2153
-    notify_volume "$VOLUME"
+    notify_volume "$VOLUME" 3000
     exit 0
     ;;
 esac
