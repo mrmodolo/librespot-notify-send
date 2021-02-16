@@ -5,6 +5,7 @@
 ## BEARER_TOKEN_FILE
 ## CLIEND_ID
 ## CLIENT_SECRET
+## VOLUME_ICON
 source '/home/modolo/.config/librespot/config.env'
 
 ## Requisita um novo token
@@ -90,11 +91,19 @@ notify_volume()  {
   local id
   id=$(cat "$XDG_RUNTIME_DIR/librespot.volume.id" 2>/dev/null || echo 1)
 
+#   id=$(gdbus call --session --dest org.freedesktop.Notifications \
+#     --object-path /org/freedesktop/Notifications \
+# 	  --method org.freedesktop.Notifications.Notify \
+# 	  "LIBRESPOT_VOLUME" "$id" \
+# 	  audio-speakers-symbolic "Spotify" "Voume [ $volume% ]" [] "$hints" "$expire_time" \
+#     | sed -e 's/(uint32 //' -e 's/,)//')
+#   echo "$id" >"$XDG_RUNTIME_DIR/librespot.volume.id"
+
   id=$(gdbus call --session --dest org.freedesktop.Notifications \
     --object-path /org/freedesktop/Notifications \
 	  --method org.freedesktop.Notifications.Notify \
 	  "LIBRESPOT_VOLUME" "$id" \
-	  audio-speakers-symbolic "Spotify" "Voume [ $volume% ]" [] "$hints" "$expire_time" \
+	  "${VOLUME_ICON}" "Spotify" "Volume [ $volume% ]" [] "$hints" "$expire_time" \
     | sed -e 's/(uint32 //' -e 's/,)//')
   echo "$id" >"$XDG_RUNTIME_DIR/librespot.volume.id"
 }
@@ -183,8 +192,12 @@ case "$PLAYER_EVENT" in
       rm -f "${CACHE_PATH}/started" &>/dev/null
       exit 0
     fi
+    re='^[0-9]+$'
     # shellcheck disable=SC2153
-    notify_volume "$VOLUME" 3000
+    if [[ ${VOLUME} =~ $re ]] ; then
+      # shellcheck disable=SC2153
+      notify_volume "$VOLUME" 3000
+    fi
     exit 0
     ;;
 esac
