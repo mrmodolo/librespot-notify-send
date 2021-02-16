@@ -187,9 +187,10 @@ case "$PLAYER_EVENT" in
     exit 0
     ;;
   "volume_set")
-    if [ -f "${CACHE_PATH}/started" ]
+    if [[ -f "${CACHE_PATH}/started" || -f "${CACHE_PATH}/reloaded" ]]
     then
       rm -f "${CACHE_PATH}/started" &>/dev/null
+      rm -f "${CACHE_PATH}/reloaded" &>/dev/null
       exit 0
     fi
     re='^[0-9]+$'
