@@ -89,16 +89,14 @@ notify_volume()  {
   # urgency 'low' é 0
   hints="{\"urgency\": <byte 0>, \"transient\": <int32 1>}"
   local id
-  id=$(cat "$XDG_RUNTIME_DIR/librespot.volume.id" 2>/dev/null || echo 1)
-
-#   id=$(gdbus call --session --dest org.freedesktop.Notifications \
-#     --object-path /org/freedesktop/Notifications \
-# 	  --method org.freedesktop.Notifications.Notify \
-# 	  "LIBRESPOT_VOLUME" "$id" \
-# 	  audio-speakers-symbolic "Spotify" "Voume [ $volume% ]" [] "$hints" "$expire_time" \
-#     | sed -e 's/(uint32 //' -e 's/,)//')
-#   echo "$id" >"$XDG_RUNTIME_DIR/librespot.volume.id"
-
+  id=$(cat "$XDG_RUNTIME_DIR/librespot.volume.id" 2>/dev/null)
+  local re='^[0-9]+$'
+  if [[ ! ${id} =~ $re ]] ; then
+    # shellcheck disable=SC2153
+    id=1
+  fi
+  echo "volume_id: ${id}" | systemd-cat -t librespot -p info
+  echo "volume: ${volume}" | systemd-cat -t librespot -p info
   id=$(gdbus call --session --dest org.freedesktop.Notifications \
     --object-path /org/freedesktop/Notifications \
 	  --method org.freedesktop.Notifications.Notify \
